@@ -18,11 +18,11 @@ pipeline {
             steps {
                 script {
                     // Login to Azure using Service Principal
-                    sh 'az login --service-principal --username <SP-APP-ID> --password <SP-PASSWORD> --tenant <TENANT-ID>'
-                    // Set the Azure subscription
-                    sh 'az account set --subscription 9f25e6a7-b97d-4ae6-8200-eb5a6628f5e9'
-                    // Login to Azure Container Registry
-                    sh 'az acr login --name jenkinscontainer07'
+                    sh '''
+                        az login --service-principal --username <SP-APP-ID> --password <SP-PASSWORD> --tenant <TENANT-ID>
+                        az account set --subscription 9f25e6a7-b97d-4ae6-8200-eb5a6628f5e9
+                        az acr login --name jenkinscontainer07
+                    '''
                 }
             }
         }
@@ -55,7 +55,7 @@ pipeline {
     post {
         always {
             // Cleanup - Remove the Docker image after deployment
-            sh 'docker rmi jenkinscontainer07.azurecr.io/python-app:v1'
+            sh 'docker rmi jenkinscontainer07.azurecr.io/python-app:v1 || true'
         }
     }
 }
