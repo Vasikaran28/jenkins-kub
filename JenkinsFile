@@ -1,0 +1,47 @@
+pipeline {
+    agent any
+
+    environment {
+        ACR_NAME = 'jenkinscontainer7'
+        IMAGE_NAME = 'python-app'
+        IMAGE_TAG = 'v1'
+        ACR_LOGIN_SERVER = "${ACR_NAME}.azurecr.io"
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    dockerImage = docker.build("${ACR_LOGIN_SERVER}/${IMAGE_NAME}:${IMAGE_TAG}")
+                }
+            }
+        }
+
+        stage('Push to ACR') {
+            steps {
+                script {
+                    docker.withRegistry("https://${ACR_LOGIN_SERVER}", 'acr-credentials') {
+                        dockerImage.push()
+                    }
+                }
+            }
+        }
+
+        stage('Deploy to AKS') {
+            steps {
+                script {
+                    sh """
+                    az aks get-credentials --resource-group kub_test --name jenkins_kub_testing
+                    kubectl apply -f deployment.yaml
+                    """
+                }
+            }
+        }
+    }
+}
