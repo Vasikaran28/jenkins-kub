@@ -1,27 +1,26 @@
 pipeline {
     agent any
-    environment {
-        ACR_LOGIN = credentials('acr-credentials-id') // Use your Jenkins credentials ID
-    }
-    stages {
-        stage('Checkout') {
-            steps {
-                checkout scm
-            }
-        }
 
-        stage('Test Docker') {
+    environment {
+        ACR_NAME = 'jenkinscontainer7' // Your ACR name
+        IMAGE_NAME = 'python-app'
+        IMAGE_TAG = 'v1'
+        AKS_CLUSTER_NAME = 'jenkins_kub_testing' // Replace with your AKS cluster name
+        RESOURCE_GROUP = 'kub_test' // Replace with your resource group
+    }
+
+    stages {
+        stage('Checkout Code') {
             steps {
-                script {
-                    sh 'docker --version'
-                }
+                checkout scm // Checkout the code from your repository
             }
         }
 
         stage('Build Docker Image') {
             steps {
                 script {
-                    sh 'docker build -t jenkinscontainer7.azurecr.io/python-app:v1 .'
+                    // Build the Docker image
+                    sh "docker build -t ${ACR_NAME}.azurecr.io/${IMAGE_NAME}:${IMAGE_TAG} ."
                 }
             }
         }
@@ -29,8 +28,10 @@ pipeline {
         stage('Login to ACR') {
             steps {
                 script {
-                    // Use the credentials stored in Jenkins to log in to ACR
-                    sh 'echo $ACR_LOGIN_PSW | docker login jenkinscontainer7.azurecr.io -u $ACR_LOGIN_USR --password-stdin'
+                    // Log in to Azure
+                    sh 'az login --use-device-code' // This allows you to log in using your browser
+                    // Log in to Azure Container Registry
+                    sh "az acr login --name ${ACR_NAME}"
                 }
             }
         }
@@ -38,8 +39,8 @@ pipeline {
         stage('Push to ACR') {
             steps {
                 script {
-                    // Push Docker image to ACR
-                    sh 'docker push jenkinscontainer7.azurecr.io/python-app:v1'
+                    // Push the Docker image to ACR
+                    sh "docker push ${ACR_NAME}.azurecr.io/${IMAGE_NAME}:${IMAGE_TAG}"
                 }
             }
         }
@@ -47,18 +48,19 @@ pipeline {
         stage('Deploy to AKS') {
             steps {
                 script {
-                    echo 'Deploying to AKS...'
-                    // Add your AKS deployment steps here
+                    // Get the AKS credentials
+                    sh "az aks get-credentials --resource-group ${RESOURCE_GROUP} --name ${AKS_CLUSTER_NAME}"
+                    // Deploy the application to AKS (assuming you have a deployment YAML file)
+                    sh "kubectl apply -f k8s/deployment.yaml" // Adjust the path to your deployment YAML file
                 }
             }
         }
     }
+
     post {
-        success {
-            echo 'Pipeline completed successfully.'
-        }
-        failure {
-            echo 'Pipeline failed.'
+        always {
+            // Clean up Docker images
+            sh "docker rmi ${ACR_NAME}.azurecr.io/${IMAGE_NAME}:${IMAGE_TAG} || true"
         }
     }
 }
