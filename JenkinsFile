@@ -1,52 +1,70 @@
 pipeline {
     agent any
 
+    environment {
+        ACR_NAME = 'jenkinscontainer07' // Your ACR name
+        IMAGE_NAME = 'python-app'
+        IMAGE_TAG = 'v1'
+        AKS_CLUSTER_NAME = 'jenkins_kub_testing' // Your AKS cluster name
+        RESOURCE_GROUP = 'kub_rg' // Your resource group
+        AZURE_SP_ID = credentials('AZURE_SP_ID') // Client ID of the service principal (store in Jenkins credentials)
+        AZURE_SP_SECRET = credentials('AZURE_SP_SECRET') // Client Secret of the service principal (store in Jenkins credentials)
+        AZURE_TENANT_ID = '5a86d774-5917-4ac5-b5d8-9c7691f841bf' // Your Azure Tenant ID
+        AZURE_SUBSCRIPTION_ID = '9f25e6a7-b97d-4ae6-8200-eb5a6628f5e9' // Your Azure Subscription ID
+    }
+
     stages {
-        stage('Checkout SCM') {
+        stage('Checkout Code') {
             steps {
-                checkout scm
+                checkout scm // Checkout the code from your repository
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t jenkinscontainer07.azurecr.io/python-app:v1 .'
+                script {
+                    // Build the Docker image
+                    sh "docker build -t ${ACR_NAME}.azurecr.io/${IMAGE_NAME}:${IMAGE_TAG} ."
+                }
             }
         }
 
         stage('Login to Azure and ACR') {
             steps {
                 script {
-                    // Login to Azure using Service Principal
-                    sh '''
-                        az login --service-principal --username <SP-APP-ID> --password <SP-PASSWORD> --tenant <TENANT-ID>
-                        az account set --subscription 9f25e6a7-b97d-4ae6-8200-eb5a6628f5e9
-                        az acr login --name jenkinscontainer07
-                    '''
+                    // Log in to Azure using Service Principal
+                    sh """
+                        az login --service-principal \
+                        --username ${AZURE_SP_ID} \
+                        --password ${AZURE_SP_SECRET} \
+                        --tenant ${AZURE_TENANT_ID}
+                    """
+                    // Set the subscription
+                    sh "az account set --subscription ${AZURE_SUBSCRIPTION_ID}"
+                    // Log in to Azure Container Registry
+                    sh "az acr login --name ${ACR_NAME}"
                 }
             }
         }
 
         stage('Push to ACR') {
             steps {
-                sh 'docker push jenkinscontainer07.azurecr.io/python-app:v1'
-            }
-        }
-
-        stage('Install kubectl') {
-            steps {
-                sh 'az aks install-cli'  // Install kubectl
-                sh 'kubectl version --client'  // Verify kubectl installation
+                script {
+                    // Push the Docker image to ACR
+                    sh "docker push ${ACR_NAME}.azurecr.io/${IMAGE_NAME}:${IMAGE_TAG}"
+                }
             }
         }
 
         stage('Deploy to AKS') {
             steps {
                 script {
-                    // Get AKS credentials
-                    sh 'az aks get-credentials --resource-group kub_rg --name jenkins_kub_testing --overwrite-existing'
-                    // Apply the Kubernetes deployment configuration
-                    sh 'kubectl apply -f k8s/deployment.yaml'
+                    // Get the AKS credentials
+                    sh "az aks get-credentials --resource-group ${RESOURCE_GROUP} --name ${AKS_CLUSTER_NAME} --overwrite-existing"
+                    // Deploy the application to AKS
+                    sh "kubectl apply -f k8s/deployment.yaml" // Ensure this path is correct
+                    // Optional: Check the status of the deployment
+                    sh "kubectl rollout status deployment/${IMAGE_NAME}" // Replace with your deployment name if necessary
                 }
             }
         }
@@ -54,8 +72,8 @@ pipeline {
 
     post {
         always {
-            // Cleanup - Remove the Docker image after deployment
-            sh 'docker rmi jenkinscontainer07.azurecr.io/python-app:v1 || true'
+            // Clean up Docker images
+            sh "docker rmi ${ACR_NAME}.azurecr.io/${IMAGE_NAME}:${IMAGE_TAG} || true"
         }
     }
 }
