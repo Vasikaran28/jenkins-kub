@@ -7,8 +7,8 @@ pipeline {
         IMAGE_TAG = 'v1'
         AKS_CLUSTER_NAME = 'jenkins_kub_testing' // Your AKS cluster name
         RESOURCE_GROUP = 'kub_rg' // Your resource group
-        AZURE_SP_ID = credentials('AZURE_SP_ID') // Client ID of the service principal (store in Jenkins credentials)
-        AZURE_SP_SECRET = credentials('AZURE_SP_SECRET') // Client Secret of the service principal (store in Jenkins credentials)
+        AZURE_SP_ID = '173fd2c7-ae07-4144-bbb6-94b1047cc188' // Client ID of the service principal (store in Jenkins credentials)
+        AZURE_SP_SECRET = 'rry8Q~mk3TP8h1yqhCuWee~Rew3wFTkndJqBqcZf' // Client Secret of the service principal (store in Jenkins credentials)
         AZURE_TENANT_ID = '5a86d774-5917-4ac5-b5d8-9c7691f841bf' // Your Azure Tenant ID
         AZURE_SUBSCRIPTION_ID = '9f25e6a7-b97d-4ae6-8200-eb5a6628f5e9' // Your Azure Subscription ID
     }
