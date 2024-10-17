@@ -1,8 +1,7 @@
 pipeline {
     agent any
     environment {
-        DOCKER_USERNAME = 'jenkinsContainer7' // Replace with your ACR username
-        DOCKER_PASSWORD = credentials('ACR_Credentials	') // Jenkins credentials ID storing ACR password
+        ACR_LOGIN = credentials('acr-credentials-id') // Use your Jenkins credentials ID
     }
     stages {
         stage('Checkout') {
@@ -27,11 +26,18 @@ pipeline {
             }
         }
 
+        stage('Login to ACR') {
+            steps {
+                script {
+                    // Use the credentials stored in Jenkins to log in to ACR
+                    sh 'echo $ACR_LOGIN_PSW | docker login jenkinscontainer7.azurecr.io -u $ACR_LOGIN_USR --password-stdin'
+                }
+            }
+        }
+
         stage('Push to ACR') {
             steps {
                 script {
-                    // Login to ACR using non-interactive method
-                    sh 'echo $DOCKER_PASSWORD | docker login jenkinscontainer7.azurecr.io -u $DOCKER_USERNAME --password-stdin'
                     // Push Docker image to ACR
                     sh 'docker push jenkinscontainer7.azurecr.io/python-app:v1'
                 }
@@ -41,8 +47,8 @@ pipeline {
         stage('Deploy to AKS') {
             steps {
                 script {
-                    // You can add your AKS deployment steps here
                     echo 'Deploying to AKS...'
+                    // Add your AKS deployment steps here
                 }
             }
         }
