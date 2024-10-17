@@ -1,16 +1,19 @@
 pipeline {
-    agent any
+    agent any 
 
     environment {
+        // Environment variables to hold the Azure credentials from azure-login-specs
+        AZURE_CLIENT_ID = credentials('azure-login-specs')?.clientId
+        AZURE_CLIENT_SECRET = credentials('azure-login-specs')?.clientSecret
+        AZURE_TENANT_ID = credentials('azure-login-specs')?.tenantId
+        AZURE_SUBSCRIPTION_ID = credentials('azure-login-specs')?.subscriptionId
+
+        // Other environment variables
         ACR_NAME = 'jenkinsContainer07' // Your ACR name
         IMAGE_NAME = 'python-app'
         IMAGE_TAG = 'v1'
         AKS_CLUSTER_NAME = 'jenkins_kub_testing' // Your AKS cluster name
         RESOURCE_GROUP = 'kub_rg' // Your resource group
-        AZURE_SP_ID = credentials('azure-client-id') // Jenkins credentials ID for Service Principal ID
-        AZURE_SP_SECRET = credentials('azure-client-secret') // Jenkins credentials ID for Service Principal Secret
-        AZURE_TENANT_ID = credentials('tenant-id') // Jenkins credentials ID for Tenant ID
-        AZURE_SUBSCRIPTION_ID = credentials('sub-id') // Jenkins credentials ID for Subscription ID
     }
 
     stages {
@@ -35,8 +38,8 @@ pipeline {
                     // Log in to Azure using Service Principal
                     sh """
                         az login --service-principal \
-                        --username ${AZURE_SP_ID} \
-                        --password ${AZURE_SP_SECRET} \
+                        --username ${AZURE_CLIENT_ID} \
+                        --password ${AZURE_CLIENT_SECRET} \
                         --tenant ${AZURE_TENANT_ID}
                     """
 
@@ -67,7 +70,7 @@ pipeline {
                     // Deploy the application to AKS
                     sh "kubectl apply -f k8s/deployment.yaml" // Ensure this path is correct
 
-                    // Optional: You can also check the status of the deployment
+                    // Optional: Check the status of the deployment
                     sh "kubectl rollout status deployment/python-app" // Replace 'python-app' with your deployment name
                 }
             }
