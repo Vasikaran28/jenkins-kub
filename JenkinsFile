@@ -46,6 +46,19 @@ pipeline {
                 }
             }
         }
+        stage('Assign AcrPull Role to AKS') {
+            steps {
+                script {
+                    // Assign AcrPull role to AKS Service Principal or Managed Identity
+                    sh """
+                        az role assignment create \
+                        --assignee ${AZURE_SP_ID} \
+                        --role AcrPull \
+                        --scope /subscriptions/${AZURE_SUBSCRIPTION_ID}/resourceGroups/kub_rg/providers/Microsoft.ContainerRegistry/registries/${ACR_NAME}
+                    """
+                }
+            }
+        }
 
         stage('Push to ACR') {
             steps {
