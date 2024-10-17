@@ -16,6 +16,6 @@ spec:
     spec:
       containers:
       - name: python-app
-        image: jenkinscontainer07.azurecr.io/python-app:v1
+        image: jencontainer.azurecr.io/python-app:v1
         ports:
         - containerPort: 5000

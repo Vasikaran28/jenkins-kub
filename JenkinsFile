@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        ACR_NAME = 'jenkinscontainer07' // Your ACR name
+        ACR_NAME = 'jencontainer' // Your ACR name
         IMAGE_NAME = 'python-app'
         IMAGE_TAG = 'v1'
         AKS_CLUSTER_NAME = 'jenkins_kub_testing' // Your AKS cluster name
