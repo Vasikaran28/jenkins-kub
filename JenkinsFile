@@ -68,7 +68,7 @@ pipeline {
                     // Get the AKS credentials
                     sh "az aks get-credentials --resource-group ${RESOURCE_GROUP} --name ${AKS_CLUSTER_NAME} --overwrite-existing"
                     // Deploy the application to AKS
-                    sh "kubectl apply -f k8s/deployment.yaml" // Ensure this path is correct
+                    sh "kubectl apply -f deployment.yaml" // Ensure this path is correct
                     // Optional: Check the status of the deployment
                     sh "kubectl rollout status deployment/${IMAGE_NAME}" // Replace with your deployment name if necessary
                 }
