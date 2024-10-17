@@ -1,13 +1,9 @@
 pipeline {
     agent any
-
     environment {
-        ACR_NAME = 'jenkinscontainer7'
-        IMAGE_NAME = 'python-app'
-        IMAGE_TAG = 'v1'
-        ACR_LOGIN_SERVER = "${ACR_NAME}.azurecr.io"
+        DOCKER_USERNAME = 'jenkinsContainer7' // Replace with your ACR username
+        DOCKER_PASSWORD = credentials('ACR_Credentials	') // Jenkins credentials ID storing ACR password
     }
-
     stages {
         stage('Checkout') {
             steps {
@@ -18,7 +14,7 @@ pipeline {
         stage('Test Docker') {
             steps {
                 script {
-                    sh 'docker --version' // Test if Docker is available
+                    sh 'docker --version'
                 }
             }
         }
@@ -26,16 +22,18 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    dockerImage = docker.build("${ACR_LOGIN_SERVER}/${IMAGE_NAME}:${IMAGE_TAG}")
+                    sh 'docker build -t jenkinscontainer7.azurecr.io/python-app:v1 .'
                 }
             }
         }
+
         stage('Push to ACR') {
             steps {
                 script {
-                    docker.withRegistry("https://${ACR_LOGIN_SERVER}", 'ACR_Credentials') {
-                        dockerImage.push()
-                    }
+                    // Login to ACR using non-interactive method
+                    sh 'echo $DOCKER_PASSWORD | docker login jenkinscontainer7.azurecr.io -u $DOCKER_USERNAME --password-stdin'
+                    // Push Docker image to ACR
+                    sh 'docker push jenkinscontainer7.azurecr.io/python-app:v1'
                 }
             }
         }
@@ -43,11 +41,18 @@ pipeline {
         stage('Deploy to AKS') {
             steps {
                 script {
-                    sh """
-                    kubectl apply -f deployment.yaml
-                    """
+                    // You can add your AKS deployment steps here
+                    echo 'Deploying to AKS...'
                 }
             }
+        }
+    }
+    post {
+        success {
+            echo 'Pipeline completed successfully.'
+        }
+        failure {
+            echo 'Pipeline failed.'
         }
     }
 }
