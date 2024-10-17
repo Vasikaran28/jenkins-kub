@@ -8,12 +8,23 @@ pipeline {
         IMAGE_TAG = 'v1' // Your Docker image tag
         AKS_CLUSTER_NAME = 'jenkins_kub_testing' // Replace with your AKS cluster name
         RESOURCE_GROUP = 'kub_test' // Replace with your resource group
-        AZURE_CLIENT_ID = credentials('azure-login-specs')?.clientId // Jenkins credentials ID for Azure Client ID
-        AZURE_CLIENT_SECRET = credentials('azure-login-specs')?.clientSecret // Jenkins credentials ID for Azure Client Secret
-        AZURE_TENANT_ID = credentials('azure-login-specs')?.tenantId // Jenkins credentials ID for Azure Tenant ID
+        AZURE_CLIENT_ID = '' // Initialize for later use
+        AZURE_CLIENT_SECRET = '' // Initialize for later use
+        AZURE_TENANT_ID = '' // Initialize for later use
     }
 
     stages {
+        stage('Set Azure Credentials') {
+            steps {
+                script {
+                    // Set the Azure credentials from Jenkins into environment variables
+                    env.AZURE_CLIENT_ID = credentials('azure-login-specs').clientId
+                    env.AZURE_CLIENT_SECRET = credentials('azure-login-specs').clientSecret
+                    env.AZURE_TENANT_ID = credentials('azure-login-specs').tenantId
+                }
+            }
+        }
+
         stage('Checkout') {
             steps {
                 checkout scm // Checkout the code from your repository
