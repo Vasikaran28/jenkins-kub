@@ -49,12 +49,17 @@ pipeline {
             steps {
                 script {
                     // Get the AKS credentials
-                    sh "az aks get-credentials --resource-group ${RESOURCE_GROUP} --name ${AKS_CLUSTER_NAME}"
-                    // Deploy the application to AKS (assuming you have a deployment YAML file)
-                    sh "kubectl apply -f k8s/deployment.yaml" // Adjust the path to your deployment YAML file
+                    sh "az aks get-credentials --resource-group ${RESOURCE_GROUP} --name ${AKS_CLUSTER_NAME} --overwrite-existing"
+                    
+                    // Deploy the application to AKS
+                    sh "kubectl apply -f k8s/deployment.yaml" // Ensure this path is correct
+                    
+                    // Optional: You can also check the status of the deployment
+                    sh "kubectl rollout status deployment/python-app" // Replace 'python-app' with your deployment name
                 }
             }
         }
+
     }
 
     post {
