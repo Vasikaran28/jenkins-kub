@@ -26,7 +26,7 @@ pipeline {
         stage('Push to ACR') {
             steps {
                 script {
-                    docker.withRegistry("https://${ACR_LOGIN_SERVER}", 'acr-credentials') {
+                    docker.withRegistry("https://${ACR_LOGIN_SERVER}", 'ACR_Credentials') {
                         dockerImage.push()
                     }
                 }
@@ -37,7 +37,6 @@ pipeline {
             steps {
                 script {
                     sh """
-                    az aks get-credentials --resource-group kub_test --name jenkins_kub_testing
                     kubectl apply -f deployment.yaml
                     """
                 }
