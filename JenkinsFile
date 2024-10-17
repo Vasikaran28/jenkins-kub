@@ -55,7 +55,11 @@ pipeline {
                 }
             }
         }
-
+        stage('Check kubectl') {
+            steps {
+                sh "kubectl version --client"
+            }
+        }
         stage('Deploy to AKS') {
             steps {
                 script {
